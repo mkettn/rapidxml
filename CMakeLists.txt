@@ -1,7 +1,7 @@
 cmake_minimum_required(VERSION 3.12)
 project("rapidxml" VERSION 1.13
   DESCRIPTION "Header-only library for C++11 to parse (read) XML data"
-  HOMEPAGE_URL "https://github.com/CodeFinder2/rapidxml")
+  HOMEPAGE_URL "https://github.com/mkettn/rapidxml")
 include(GNUInstallDirs)
 
 add_library(${PROJECT_NAME} INTERFACE)

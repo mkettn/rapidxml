@@ -246,6 +246,10 @@ namespace rapidxml
     //! See xml_document::parse() function.
     const int parse_normalize_whitespace = 0x800;
 
+
+    //! Parse flag instructing the parser to ignore namespaces, while parsing the document.
+    const int parse_ignore_ns = 0x1000;
+
     // Compound flags
     
     //! Parse flags which represent default behaviour of the parser. 
@@ -304,6 +308,20 @@ namespace rapidxml
             static const unsigned char lookup_digits[256];                  // Digits
             static const unsigned char lookup_upcase[256];                  // To uppercase conversion table for ASCII characters
         };
+
+        template <class Ch>
+        inline short find_char(const Ch *p, std::size_t sz, const Ch c)
+	{
+          const Ch *tmp = p;
+	  while(*tmp!=c && sz>0) {
+		  ++tmp;
+		  --sz;
+	  }
+	  if (*tmp==c) {
+		  return tmp-p;
+	  }
+	  return -1;
+        }
 
         // Find length of the string
         template<class Ch>
@@ -2044,6 +2062,12 @@ namespace rapidxml
             skip<node_name_pred, Flags>(text);
             if (text == name)
                 RAPIDXML_PARSE_ERROR("expected element name", text);
+	    if((Flags&parse_ignore_ns) != 0) {
+              short offs = internal::find_char(name, text - name, ':');
+              if (offs > 0) {
+                name += offs+1;
+                    }
+            }
             element->name(name, text - name);
             
             // Skip whitespace between element name and attributes or >
@@ -2248,6 +2272,13 @@ namespace rapidxml
 
                 // Create new attribute
                 xml_attribute<Ch> *attribute = this->allocate_attribute();
+                if ((Flags & parse_ignore_ns) != 0) {
+                  short offs = internal::find_char(name, text - name, ':');
+                  if (offs > 0) {
+                    name += offs + 1;
+                  }
+                }
+
                 attribute->name(name, text - name);
                 node->append_attribute(attribute);
 

@@ -59,6 +59,9 @@ namespace rapidxml
                 throw runtime_error("error reading stream");
             m_data.push_back(0);
         }
+
+	    file(const std::string& filename)
+		    : file(filename.c_str()){}
         
         //! Gets file data.
         //! \return Pointer to data of file.

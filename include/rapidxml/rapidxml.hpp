@@ -11,6 +11,7 @@
     #include <cstdlib>      // For std::size_t
     #include <cassert>      // For assert
     #include <new>          // For placement new
+    #include <vector>
 #endif
 
 // On MSVC, disable "conditional expression is constant" warning (level 4). 
@@ -966,6 +967,16 @@ namespace rapidxml
                 return m_first_node;
         }
 
+#ifndef RAPIDXML_NO_STDLIB
+        xml_node<Ch> *first_node(std::vector<const Ch *> hierarchy,
+                                 bool case_sensitive = true) const {
+          xml_node<Ch> *ret = this;
+          for (auto&& elem:hierarchy) {
+		  ret = ret->first_node(elem, internal::measure(elem), case_sensitive);
+          }
+          return ret;
+        }
+#endif
         //! Gets last child node, optionally matching node name. 
         //! Behaviour is undefined if node has no children.
         //! Use first_node() to test if node has children.

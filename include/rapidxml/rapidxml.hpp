@@ -970,8 +970,12 @@ namespace rapidxml
 #ifndef RAPIDXML_NO_STDLIB
         xml_node<Ch> *first_node(const std::vector<const Ch *>& hierarchy,
                                  bool case_sensitive = true) const {
-          xml_node<Ch> *ret = this->first_node(hierarchy.front());
-	  auto it = hierarchy.begin();
+          auto it = hierarchy.begin();
+          xml_node<Ch> *ret = this->first_node(*it);
+	  if (ret==nullptr) {
+		  return nullptr;
+	  }
+
 	  it++;
           for (; it!=hierarchy.end();it++) {
             ret = ret->first_node(*it, internal::measure(*it), case_sensitive);

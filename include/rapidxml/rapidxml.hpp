@@ -668,7 +668,10 @@ namespace rapidxml
     {
 
     public:
-        
+#ifdef RAPIDXML_LOCATION
+	    size_t m_line;
+	    size_t m_col;
+#endif
         ///////////////////////////////////////////////////////////////////////////
         // Construction & destruction
     
@@ -1392,7 +1395,11 @@ namespace rapidxml
     template<class Ch = char>
     class xml_document: public xml_node<Ch>, public memory_pool<Ch>
     {
-    
+#ifdef RAPIDXML_LOCATION
+	    size_t m_num_lines = 0;
+	    size_t m_col = 0;
+	    Ch* m_last_nl = 0;
+#endif
     public:
 
         //! Constructs empty XML document
@@ -1416,7 +1423,9 @@ namespace rapidxml
         void parse(Ch *text)
         {
             assert(text);
-            
+#ifdef RAPIDXML_LOCATION
+	    m_last_nl = text;
+#endif
             // Remove current contents
             this->remove_all_nodes();
             this->remove_all_attributes();
@@ -1590,11 +1599,18 @@ namespace rapidxml
 
         // Skip characters until predicate evaluates to true
         template<class StopPred, int Flags>
-        static void skip(Ch *&text)
+        void skip(Ch *&text)
         {
             Ch *tmp = text;
-            while (StopPred::test(*tmp))
-                ++tmp;
+            while (StopPred::test(*tmp)) {
+#ifdef RAPIDXML_LOCATION
+		    if(*tmp=='\n') {
+			    m_num_lines++;
+			    m_last_nl = tmp+1;
+		    }
+#endif
+              ++tmp;
+            }
             text = tmp;
         }
 
@@ -1602,7 +1618,7 @@ namespace rapidxml
         // - replacing XML character entity references with proper characters (&apos; &amp; &quot; &lt; &gt; &#...;)
         // - condensing whitespace sequences to single space character
         template<class StopPred, class StopPredPure, int Flags>
-        static Ch *skip_and_expand_character_refs(Ch *&text)
+        Ch *skip_and_expand_character_refs(Ch *&text)
         {
             // If entity translation, whitespace condense and whitespace trimming is disabled, use plain skip
             if (Flags & parse_no_entity_translation && 
@@ -2086,9 +2102,12 @@ namespace rapidxml
                     }
             }
             element->name(name, text - name);
-            
-            // Skip whitespace between element name and attributes or >
-            skip<whitespace_pred, Flags>(text);
+#ifdef RAPIDXML_LOCATION
+	    element->m_line = this->m_num_lines;
+            element->m_col = text - this->m_last_nl;
+#endif
+	    // Skip whitespace between element name and attributes or >
+	    skip<whitespace_pred, Flags>(text);
 
             // Parse attributes, if any
             parse_node_attributes<Flags>(text, element);
@@ -2297,6 +2316,10 @@ namespace rapidxml
                 }
 
                 attribute->name(name, text - name);
+#ifdef RAPIDXML_LOCATION
+                attribute->m_line = this->m_num_lines;
+                attribute->m_col = text - this->m_last_nl;
+#endif
                 node->append_attribute(attribute);
 
                 // Skip whitespace after attribute name

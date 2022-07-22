@@ -1398,7 +1398,7 @@ namespace rapidxml
 #ifdef RAPIDXML_LOCATION
 	    size_t m_num_lines = 0;
 	    size_t m_col = 0;
-	    Ch* m_last_nl = 0;
+	    Ch* m_last_nl = nullptr;
 #endif
     public:
 
@@ -1467,7 +1467,7 @@ namespace rapidxml
 
         ///////////////////////////////////////////////////////////////////////
         // Internal character utility functions
-        
+
         // Detect whitespace character
         struct whitespace_pred
         {
@@ -1829,6 +1829,12 @@ namespace rapidxml
                 // Skip until end of comment
                 while (text[0] != Ch('-') || text[1] != Ch('-') || text[2] != Ch('>'))
                 {
+#ifdef RAPIDXML_LOCATION
+                  if (*text == '\n') {
+                    m_num_lines++;
+                    m_last_nl = text+1;
+                  }
+#endif
                     if (!text[0])
                         RAPIDXML_PARSE_ERROR("unexpected end of data", text);
                     ++text;
@@ -2104,7 +2110,7 @@ namespace rapidxml
             element->name(name, text - name);
 #ifdef RAPIDXML_LOCATION
 	    element->m_line = this->m_num_lines;
-            element->m_col = text - this->m_last_nl;
+            element->m_col = name - this->m_last_nl;
 #endif
 	    // Skip whitespace between element name and attributes or >
 	    skip<whitespace_pred, Flags>(text);

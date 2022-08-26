@@ -53,7 +53,11 @@ namespace rapidxml
     
 #include <exception>    // For std::exception
 
+#ifdef RAPIDXML_LOCATION
+#define RAPIDXML_PARSE_ERROR(what, where) throw parse_error(what, this)
+#else
 #define RAPIDXML_PARSE_ERROR(what, where) throw parse_error(what, where)
+#endif
 
 namespace rapidxml
 {
@@ -1395,12 +1399,12 @@ namespace rapidxml
     template<class Ch = char>
     class xml_document: public xml_node<Ch>, public memory_pool<Ch>
     {
-#ifdef RAPIDXML_LOCATION
-	    size_t m_num_lines = 0;
-	    size_t m_col = 0;
-	    Ch* m_last_nl = nullptr;
-#endif
     public:
+#ifdef RAPIDXML_LOCATION
+      size_t m_num_lines = 0;
+      size_t m_col = 0;
+      Ch *m_last_nl = nullptr;
+#endif
 
         //! Constructs empty XML document
         xml_document()
@@ -1552,7 +1556,7 @@ namespace rapidxml
 
         // Insert coded character, using UTF8 or 8-bit ASCII
         template<int Flags>
-        static void insert_coded_character(Ch *&text, unsigned long code)
+        void insert_coded_character(Ch *&text, unsigned long code)
         {
             if (Flags & parse_no_utf8)
             {
@@ -1795,7 +1799,14 @@ namespace rapidxml
                 while (text[0] != Ch('?') || text[1] != Ch('>'))
                 {
                     if (!text[0])
-                        RAPIDXML_PARSE_ERROR("unexpected end of data", text);
+                        RAPIDXML_PARSE_ERROR("unexpected end of data", this);
+#ifdef RAPIDXML_LOCATION
+		    if(text[0]=='\n') {
+			    m_num_lines++;
+                            m_last_nl = text;
+                            m_col=0;
+		    }
+#endif
                     ++text;
                 }
                 text += 2;    // Skip '?>'
@@ -1851,7 +1862,12 @@ namespace rapidxml
             {
                 if (!text[0])
                     RAPIDXML_PARSE_ERROR("unexpected end of data", text);
-                ++text;
+#ifdef RAPIDXML_LOCATION
+                if (*text == '\n') {
+                  m_num_lines++;
+                  m_last_nl = text + 1;
+                }
+#endif
             }
 
             // Create comment node

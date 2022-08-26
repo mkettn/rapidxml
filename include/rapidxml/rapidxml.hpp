@@ -1401,7 +1401,7 @@ namespace rapidxml
     {
     public:
 #ifdef RAPIDXML_LOCATION
-      size_t m_num_lines = 0;
+      size_t m_num_lines = 1;
       size_t m_col = 0;
       Ch *m_last_nl = nullptr;
 #endif
